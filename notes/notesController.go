@@ -55,7 +55,6 @@ func createNote(w http.ResponseWriter, r *http.Request) {
 	span, ctx := tracer.StartSpanFromContext(r.Context(), "postNote")
 	defer span.Finish()
 
-	//set ID with increasing levels of ID
 	desc := r.URL.Query().Get("desc")
 
 	if r.URL.Query().Get("add_date") != "" && strings.EqualFold(r.URL.Query().Get("add_date"), "y") {
@@ -81,7 +80,6 @@ func createNote(w http.ResponseWriter, r *http.Request) {
 		desc = desc + " with date " + string(body)
 	}
 
-	//create note with desc and insert into table
 	testNote := Note{
 		ID:          addNote(desc, ctx),
 		Description: desc,
