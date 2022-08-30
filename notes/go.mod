@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/go-chi/chi v1.5.4
+	github.com/mattn/go-sqlite3 v1.14.15
 	gopkg.in/DataDog/dd-trace-go.v1 v1.41.0
 )
 
@@ -20,7 +21,6 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/mattn/go-sqlite3 v1.14.15 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/tinylib/msgp v1.1.2 // indirect
