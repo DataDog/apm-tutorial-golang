@@ -33,7 +33,7 @@ func main() {
 	}
 	defer db.Close()
 
-	sts := ` DROP TABLE IF EXISTS cars;
+	sts := ` DROP TABLE IF EXISTS notes;
 			CREATE TABLE notes(id INTEGER PRIMARY KEY, description TEXT);`
 	_, err = db.Exec(sts)
 	if err != nil {
