@@ -1,6 +1,7 @@
 package notes
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -9,18 +10,18 @@ import (
 )
 
 //tracing annotations go here if possible
-func doLongRunningProcess(span tracer.Span) {
-	childSpan := tracer.StartSpan("traceMethod1", tracer.ChildOf(span.Context()))
+func doLongRunningProcess(ctx context.Context) {
+	childSpan, ctx := tracer.StartSpanFromContext(ctx, "traceMethod1")
 	childSpan.SetTag(ext.ResourceName, "NotesHelper.doLongRunningProcess")
 	defer childSpan.Finish()
 
 	time.Sleep(300 * time.Millisecond)
 	log.Println("Hello from the long running process in Notes")
-	privateMethod1(childSpan)
+	privateMethod1(ctx)
 }
 
-func anotherProcess(span tracer.Span) {
-	childSpan := tracer.StartSpan("traceMethod2", tracer.ChildOf(span.Context()))
+func anotherProcess(ctx context.Context) {
+	childSpan, ctx := tracer.StartSpanFromContext(ctx, "traceMethod2")
 	childSpan.SetTag(ext.ResourceName, "NotesHelper.anotherProcess")
 	defer childSpan.Finish()
 
@@ -28,8 +29,8 @@ func anotherProcess(span tracer.Span) {
 	log.Println("Hello from the anotherProcess in Notes")
 }
 
-func privateMethod1(span tracer.Span) {
-	childSpan := tracer.StartSpan("manualSpan1", tracer.ChildOf(span.Context()))
+func privateMethod1(ctx context.Context) {
+	childSpan, ctx := tracer.StartSpanFromContext(ctx, "manualSpan1")
 	childSpan.SetTag(ext.ResourceName, "privateMethod1")
 	defer childSpan.Finish()
 

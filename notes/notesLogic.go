@@ -2,131 +2,173 @@ package notes
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
+	"net/http"
+	"strconv"
 
-	"github.com/mattn/go-sqlite3"
-	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-func getNote(id string, parentContext context.Context) []Note {
-	sqltrace.Register("sqlite3", &sqlite3.SQLiteDriver{}, sqltrace.WithServiceName("notes"))
-	span, ctx := tracer.StartSpanFromContext(parentContext, "getQuery",
-		tracer.SpanType("db"),
-		tracer.ServiceName("notes"),
-		tracer.ResourceName("getNoteByID"),
-	)
-
-	db, err := sqltrace.Open("sqlite3", "file::memory:?cache=shared")
-	checkErr(err)
-	defer db.Close()
-
-	if id == "all" {
-		rows, err := db.QueryContext(ctx, "SELECT * FROM notes ")
-		checkErr(err)
-		defer rows.Close()
-
-		notes := make([]Note, 0)
-
-		for rows.Next() {
-			newNote := Note{}
-			err = rows.Scan(&newNote.ID, &newNote.Description)
-			checkErr(err)
-
-			notes = append(notes, newNote)
-		}
-		span.Finish(tracer.WithError(err))
-		return notes
-
-	} else {
-		rows, err := db.QueryContext(ctx, "SELECT * FROM notes where id = ?", id)
-		checkErr(err)
-		defer rows.Close()
-
-		notes := make([]Note, 0)
-
-		for rows.Next() {
-			newNote := Note{}
-			err = rows.Scan(&newNote.ID, &newNote.Description)
-			checkErr(err)
-
-			notes = append(notes, newNote)
-		}
-
-		span.Finish(tracer.WithError(err))
-		return notes
-
-	}
+type LogicImpl struct {
+	DB           *sql.DB
+	Logger       *zap.Logger
+	CalendarHost string
+	Client       *http.Client
 }
 
-func addNote(desc string, parentContext context.Context) string {
-	sqltrace.Register("sqlite3", &sqlite3.SQLiteDriver{}, sqltrace.WithServiceName("notes"))
-	span, ctx := tracer.StartSpanFromContext(parentContext, "createQuery",
+func (li *LogicImpl) GetAllNotes(ctx context.Context) ([]Note, error) {
+	span, ctx := tracer.StartSpanFromContext(ctx, "getAllQuery",
+		tracer.SpanType("db"),
+		tracer.ServiceName("notes"),
+		tracer.ResourceName("GetAllNotes"),
+	)
+
+	var err error
+	defer func() {
+		span.Finish(tracer.WithError(err))
+	}()
+
+	rows, err := li.DB.QueryContext(ctx, "SELECT * FROM notes ")
+	if err != nil {
+		return nil, fmt.Errorf("query failed: %w", err)
+	}
+
+	defer rows.Close()
+
+	var notes []Note
+
+	for rows.Next() {
+		newNote := Note{}
+		err = rows.Scan(&newNote.ID, &newNote.Description)
+		if err != nil {
+			return nil, fmt.Errorf("scan failed: %w", err)
+		}
+
+		notes = append(notes, newNote)
+	}
+	return notes, nil
+}
+
+func (li *LogicImpl) GetNote(ctx context.Context, id string) (Note, error) {
+	span, ctx := tracer.StartSpanFromContext(ctx, "getQuery",
+		tracer.SpanType("db"),
+		tracer.ServiceName("notes"),
+		tracer.ResourceName("GetNote"),
+	)
+
+	var err error
+	defer func() {
+		span.Finish(tracer.WithError(err))
+	}()
+
+	row := li.DB.QueryRowContext(ctx, "SELECT * FROM notes where id = ?", id)
+
+	if err = row.Err(); err != nil {
+		return Note{}, fmt.Errorf("query failed: %w", err)
+	}
+	note := Note{}
+	err = row.Scan(&note.ID, &note.Description)
+	if err != nil {
+		return Note{}, fmt.Errorf("scan failed: %w", err)
+	}
+
+	return note, nil
+}
+
+func (li *LogicImpl) CreateNote(ctx context.Context, desc string, addDate bool) (Note, error) {
+	span, ctx := tracer.StartSpanFromContext(ctx, "createQuery",
 		tracer.SpanType("db"),
 		tracer.ServiceName("notes"),
 		tracer.ResourceName("createNote"),
 	)
+	var err error
+	defer func() {
+		span.Finish(tracer.WithError(err))
+	}()
 
-	db, err := sqltrace.Open("sqlite3", "file::memory:?cache=shared")
-	checkErr(err)
-	defer db.Close()
+	if addDate {
+		var date string
+		date, err = li.getCalendarInfo(ctx)
+		if err != nil {
+			return Note{}, fmt.Errorf("getCalendarInfo failed: %w", err)
+		}
+		desc = desc + " with date " + date
+	}
 
-	stmt, err := db.PrepareContext(ctx, "INSERT INTO notes(description) VALUES (?) RETURNING id;")
-	checkErr(err)
-
-	newNote, err := stmt.ExecContext(ctx, desc)
-	checkErr(err)
-	defer stmt.Close()
+	newNote, err := li.DB.ExecContext(ctx, "INSERT INTO notes(description) VALUES (?) RETURNING id;")
+	if err != nil {
+		return Note{}, fmt.Errorf("execute query failed: %w", err)
+	}
 
 	newNoteId, err := newNote.LastInsertId()
-	checkErr(err)
+	if err != nil {
+		return Note{}, fmt.Errorf("lastInsertId failed: %w", err)
+	}
 
-	span.Finish(tracer.WithError(err))
-	return fmt.Sprint(newNoteId)
+	return Note{
+		ID:          strconv.FormatInt(newNoteId, 10),
+		Description: desc,
+	}, nil
 }
 
-func updateNote(id string, desc string, parentContext context.Context) Note {
-	sqltrace.Register("sqlite3", &sqlite3.SQLiteDriver{}, sqltrace.WithServiceName("notes"))
-
-	span, ctx := tracer.StartSpanFromContext(parentContext, "updateQuery",
+func (li *LogicImpl) UpdateNote(ctx context.Context, id string, newDescription string) (Note, error) {
+	span, ctx := tracer.StartSpanFromContext(ctx, "updateQuery",
 		tracer.SpanType("db"),
 		tracer.ServiceName("notes"),
 		tracer.ResourceName("updateNote"),
 	)
-	db, err := sqltrace.Open("sqlite3", "file::memory:?cache=shared")
-	checkErr(err)
-	defer db.Close()
+	var err error
+	defer func() {
+		span.Finish(tracer.WithError(err))
+	}()
 
-	stmt, err := db.PrepareContext(ctx, "UPDATE notes set description = ? where id = ?")
-	checkErr(err)
-	defer stmt.Close()
+	_, err = li.DB.ExecContext(ctx, "UPDATE notes set description = ? where id = ?")
+	if err != nil {
+		return Note{}, fmt.Errorf("execute query failed: %w", err)
+	}
 
-	_, err = stmt.ExecContext(ctx, desc, id)
-	checkErr(err)
-
-	span.Finish(tracer.WithError(err))
-	return Note{id, desc}
+	return Note{id, newDescription}, nil
 }
 
-func deleteNote(id string, parentContext context.Context) string {
-	sqltrace.Register("sqlite3", &sqlite3.SQLiteDriver{}, sqltrace.WithServiceName("notes"))
-
-	span, ctx := tracer.StartSpanFromContext(parentContext, "deleteQuery",
+func (li *LogicImpl) DeleteNote(ctx context.Context, id string) error {
+	span, ctx := tracer.StartSpanFromContext(ctx, "deleteQuery",
 		tracer.SpanType("db"),
 		tracer.ServiceName("notes"),
 		tracer.ResourceName("deleteNote"),
 	)
-	db, err := sqltrace.Open("sqlite3", "file::memory:?cache=shared")
-	checkErr(err)
-	defer db.Close()
+	var err error
+	defer func() {
+		span.Finish(tracer.WithError(err))
+	}()
 
-	stmt, err := db.PrepareContext(ctx, "DELETE FROM notes where id = ?")
-	checkErr(err)
-	defer stmt.Close()
+	_, err = li.DB.ExecContext(ctx, "DELETE FROM notes where id = ?")
+	if err != nil {
+		return fmt.Errorf("query exec failed: %w", err)
+	}
 
-	_, err = stmt.ExecContext(ctx, id)
-	checkErr(err)
+	return nil
+}
 
-	span.Finish(tracer.WithError(err))
-	return "Deleted"
+func (li *LogicImpl) getCalendarInfo(ctx context.Context) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+li.CalendarHost+":9090/calendar", nil)
+	if err != nil {
+		return "", fmt.Errorf("request creation failed: %w", err)
+	}
+
+	resp, err := li.Client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("http request failed: %w", err)
+	}
+
+	defer resp.Body.Close()
+	m := json.NewDecoder(resp.Body)
+	var date string
+	err = m.Decode(&date)
+	if err != nil {
+		return "", fmt.Errorf("decode failed: %w", err)
+	}
+	return date, nil
 }

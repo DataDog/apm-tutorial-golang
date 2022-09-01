@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	calendar "calendar.com"
+	"github.com/datadog/apm_tutorial_golang/calendar"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
