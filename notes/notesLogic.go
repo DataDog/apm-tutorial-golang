@@ -5,11 +5,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	"go.uber.org/zap"
 )
 
 type LogicImpl struct {
@@ -20,17 +19,6 @@ type LogicImpl struct {
 }
 
 func (li *LogicImpl) GetAllNotes(ctx context.Context) ([]Note, error) {
-	span, ctx := tracer.StartSpanFromContext(ctx, "getAllQuery",
-		tracer.SpanType("db"),
-		tracer.ServiceName("notes"),
-		tracer.ResourceName("GetAllNotes"),
-	)
-
-	var err error
-	defer func() {
-		span.Finish(tracer.WithError(err))
-	}()
-
 	rows, err := li.DB.QueryContext(ctx, "SELECT * FROM notes ")
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %w", err)
@@ -38,7 +26,7 @@ func (li *LogicImpl) GetAllNotes(ctx context.Context) ([]Note, error) {
 
 	defer rows.Close()
 
-	var notes []Note
+	notes := make([]Note, 0)
 
 	for rows.Next() {
 		newNote := Note{}
@@ -53,24 +41,13 @@ func (li *LogicImpl) GetAllNotes(ctx context.Context) ([]Note, error) {
 }
 
 func (li *LogicImpl) GetNote(ctx context.Context, id string) (Note, error) {
-	span, ctx := tracer.StartSpanFromContext(ctx, "getQuery",
-		tracer.SpanType("db"),
-		tracer.ServiceName("notes"),
-		tracer.ResourceName("GetNote"),
-	)
+	row := li.DB.QueryRowContext(ctx, "SELECT * FROM notes WHERE id = ?", id)
 
-	var err error
-	defer func() {
-		span.Finish(tracer.WithError(err))
-	}()
-
-	row := li.DB.QueryRowContext(ctx, "SELECT * FROM notes where id = ?", id)
-
-	if err = row.Err(); err != nil {
+	if err := row.Err(); err != nil {
 		return Note{}, fmt.Errorf("query failed: %w", err)
 	}
 	note := Note{}
-	err = row.Scan(&note.ID, &note.Description)
+	err := row.Scan(&note.ID, &note.Description)
 	if err != nil {
 		return Note{}, fmt.Errorf("scan failed: %w", err)
 	}
@@ -79,26 +56,16 @@ func (li *LogicImpl) GetNote(ctx context.Context, id string) (Note, error) {
 }
 
 func (li *LogicImpl) CreateNote(ctx context.Context, desc string, addDate bool) (Note, error) {
-	span, ctx := tracer.StartSpanFromContext(ctx, "createQuery",
-		tracer.SpanType("db"),
-		tracer.ServiceName("notes"),
-		tracer.ResourceName("createNote"),
-	)
-	var err error
-	defer func() {
-		span.Finish(tracer.WithError(err))
-	}()
-
 	if addDate {
 		var date string
-		date, err = li.getCalendarInfo(ctx)
+		date, err := li.getCalendarInfo(ctx)
 		if err != nil {
 			return Note{}, fmt.Errorf("getCalendarInfo failed: %w", err)
 		}
 		desc = desc + " with date " + date
 	}
 
-	newNote, err := li.DB.ExecContext(ctx, "INSERT INTO notes(description) VALUES (?) RETURNING id;")
+	newNote, err := li.DB.ExecContext(ctx, "INSERT INTO notes(description) VALUES (?) RETURNING id;", desc)
 	if err != nil {
 		return Note{}, fmt.Errorf("execute query failed: %w", err)
 	}
@@ -115,17 +82,7 @@ func (li *LogicImpl) CreateNote(ctx context.Context, desc string, addDate bool) 
 }
 
 func (li *LogicImpl) UpdateNote(ctx context.Context, id string, newDescription string) (Note, error) {
-	span, ctx := tracer.StartSpanFromContext(ctx, "updateQuery",
-		tracer.SpanType("db"),
-		tracer.ServiceName("notes"),
-		tracer.ResourceName("updateNote"),
-	)
-	var err error
-	defer func() {
-		span.Finish(tracer.WithError(err))
-	}()
-
-	_, err = li.DB.ExecContext(ctx, "UPDATE notes set description = ? where id = ?")
+	_, err := li.DB.ExecContext(ctx, "UPDATE notes set description = ? WHERE id = ?", newDescription, id)
 	if err != nil {
 		return Note{}, fmt.Errorf("execute query failed: %w", err)
 	}
@@ -134,17 +91,7 @@ func (li *LogicImpl) UpdateNote(ctx context.Context, id string, newDescription s
 }
 
 func (li *LogicImpl) DeleteNote(ctx context.Context, id string) error {
-	span, ctx := tracer.StartSpanFromContext(ctx, "deleteQuery",
-		tracer.SpanType("db"),
-		tracer.ServiceName("notes"),
-		tracer.ResourceName("deleteNote"),
-	)
-	var err error
-	defer func() {
-		span.Finish(tracer.WithError(err))
-	}()
-
-	_, err = li.DB.ExecContext(ctx, "DELETE FROM notes where id = ?")
+	_, err := li.DB.ExecContext(ctx, "DELETE FROM notes WHERE id = ?", id)
 	if err != nil {
 		return fmt.Errorf("query exec failed: %w", err)
 	}

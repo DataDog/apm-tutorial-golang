@@ -21,7 +21,7 @@ func doLongRunningProcess(ctx context.Context) {
 }
 
 func anotherProcess(ctx context.Context) {
-	childSpan, ctx := tracer.StartSpanFromContext(ctx, "traceMethod2")
+	childSpan, _ := tracer.StartSpanFromContext(ctx, "traceMethod2")
 	childSpan.SetTag(ext.ResourceName, "NotesHelper.anotherProcess")
 	defer childSpan.Finish()
 
@@ -30,7 +30,10 @@ func anotherProcess(ctx context.Context) {
 }
 
 func privateMethod1(ctx context.Context) {
-	childSpan, ctx := tracer.StartSpanFromContext(ctx, "manualSpan1")
+	childSpan, _ := tracer.StartSpanFromContext(ctx, "manualSpan1",
+		tracer.SpanType("web"),
+		tracer.ServiceName("noteshelper"),
+	)
 	childSpan.SetTag(ext.ResourceName, "privateMethod1")
 	defer childSpan.Finish()
 

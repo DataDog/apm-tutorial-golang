@@ -2,12 +2,13 @@ package main
 
 import (
 	"database/sql"
-	"github.com/mattn/go-sqlite3"
-	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
 
 	"github.com/datadog/apm_tutorial_golang/notes"
 
@@ -18,6 +19,8 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
+
+	httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 )
 
 func main() {
@@ -30,6 +33,8 @@ func main() {
 	db := setupDB(logger)
 	defer db.Close()
 
+	client := httptrace.WrapClient(&http.Client{Timeout: time.Duration(5) * time.Second})
+
 	host, found := os.LookupEnv("CALENDAR_HOST")
 	if !found || host == "" {
 		host = "localhost"
@@ -38,6 +43,7 @@ func main() {
 	logic := &notes.LogicImpl{
 		DB:           db,
 		Logger:       logger,
+		Client:       client,
 		CalendarHost: host,
 	}
 
@@ -56,7 +62,7 @@ func main() {
 }
 
 func setupDB(logger *zap.Logger) *sql.DB {
-	sqltrace.Register("sqlite3", &sqlite3.SQLiteDriver{}, sqltrace.WithServiceName("notes"))
+	sqltrace.Register("sqlite3", &sqlite3.SQLiteDriver{}, sqltrace.WithServiceName("db"))
 	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
 	if err != nil {
 		logger.Fatal("error setting up database", zap.Error(err))

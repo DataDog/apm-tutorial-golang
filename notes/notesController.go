@@ -3,9 +3,10 @@ package notes
 import (
 	"context"
 	"encoding/json"
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
+
+	"go.uber.org/zap"
 
 	"github.com/go-chi/chi"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
@@ -28,9 +29,9 @@ func (nr *Router) Register() chi.Router {
 	r := chi.NewRouter()
 	r.Get("/notes", makeSpanMiddleware("GetAllNotes", nr.GetAllNotes))               // GET /notes
 	r.Post("/notes", makeSpanMiddleware("CreateNote", nr.CreateNote))                // POST /notes
-	r.Get("/notes/{noteID}", makeSpanMiddleware("GetNode", nr.GetNoteByID))          // GET /articles/123
-	r.Put("/notes/{noteID}", makeSpanMiddleware("UpdateNode", nr.UpdateNoteByID))    // PUT /articles/123
-	r.Delete("/notes/{noteID}", makeSpanMiddleware("DeleteNote", nr.DeleteNoteByID)) // DELETE /articles/123
+	r.Get("/notes/{noteID}", makeSpanMiddleware("GetNote", nr.GetNoteByID))          // GET /notes/123
+	r.Put("/notes/{noteID}", makeSpanMiddleware("UpdateNote", nr.UpdateNoteByID))    // PUT /notes/123
+	r.Delete("/notes/{noteID}", makeSpanMiddleware("DeleteNote", nr.DeleteNoteByID)) // DELETE /notes/123
 
 	return r
 }
@@ -53,10 +54,9 @@ func reportError(err error, category string, w http.ResponseWriter) {
 		Message:  err.Error(),
 	}
 
-	response, _ := json.Marshal(msg)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write(response)
+	json.NewEncoder(w).Encode(msg)
 }
 
 func reportInputError(message string, w http.ResponseWriter) {
@@ -68,10 +68,9 @@ func reportInputError(message string, w http.ResponseWriter) {
 		Message:  "invalid input",
 	}
 
-	response, _ := json.Marshal(msg)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
-	w.Write(response)
+	json.NewEncoder(w).Encode(msg)
 }
 
 func (nr *Router) GetAllNotes(w http.ResponseWriter, r *http.Request) {
@@ -81,18 +80,17 @@ func (nr *Router) GetAllNotes(w http.ResponseWriter, r *http.Request) {
 		reportError(err, "GetAllNotes", w)
 		return
 	}
-	response, err := json.Marshal(notes)
-	if err != nil {
-		reportError(err, "GetAllNotes-Marshal", w)
-		return
-	}
 
 	doLongRunningProcess(ctx)
 	anotherProcess(ctx)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(response)
+	err = json.NewEncoder(w).Encode(notes)
+	if err != nil {
+		reportError(err, "GetAllNotes-Encode", w)
+		return
+	}
 }
 
 func (nr *Router) GetNoteByID(w http.ResponseWriter, r *http.Request) {
@@ -107,15 +105,14 @@ func (nr *Router) GetNoteByID(w http.ResponseWriter, r *http.Request) {
 		reportError(err, "GetNoteByID", w)
 		return
 	}
-	response, err := json.Marshal(note)
-	if err != nil {
-		reportError(err, "GetNoteByID-Marshal", w)
-		return
-	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(response)
+	err = json.NewEncoder(w).Encode(note)
+	if err != nil {
+		reportError(err, "GetNotes-Encode", w)
+		return
+	}
 }
 
 func (nr *Router) CreateNote(w http.ResponseWriter, r *http.Request) {
@@ -133,15 +130,13 @@ func (nr *Router) CreateNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(note)
-	if err != nil {
-		reportError(err, "CreateNote-Marshal", w)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(response)
+	err = json.NewEncoder(w).Encode(note)
+	if err != nil {
+		reportError(err, "CreateNote-Encode", w)
+		return
+	}
 }
 
 func (nr *Router) UpdateNoteByID(w http.ResponseWriter, r *http.Request) {
@@ -154,15 +149,13 @@ func (nr *Router) UpdateNoteByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, err := json.Marshal(note)
-	if err != nil {
-		reportError(err, "UpdateNoteByID-Marshal", w)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(response)
+	err = json.NewEncoder(w).Encode(note)
+	if err != nil {
+		reportError(err, "UpdateNote-Encode", w)
+		return
+	}
 }
 
 func (nr *Router) DeleteNoteByID(w http.ResponseWriter, r *http.Request) {
@@ -174,9 +167,11 @@ func (nr *Router) DeleteNoteByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response, _ := json.Marshal("Deleted")
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(response)
+	err = json.NewEncoder(w).Encode("Deleted")
+	if err != nil {
+		reportError(err, "DeleteNote-Encode", w)
+		return
+	}
 }
