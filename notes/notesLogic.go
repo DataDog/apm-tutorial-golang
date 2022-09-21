@@ -19,7 +19,7 @@ type LogicImpl struct {
 }
 
 func (li *LogicImpl) GetAllNotes(ctx context.Context) ([]Note, error) {
-	rows, err := li.DB.QueryContext(ctx, "SELECT * FROM notes ")
+	rows, err := li.DB.QueryContext(ctx, "SELECT * FROM notes;")
 	if err != nil {
 		return nil, fmt.Errorf("query failed: %w", err)
 	}
@@ -41,7 +41,7 @@ func (li *LogicImpl) GetAllNotes(ctx context.Context) ([]Note, error) {
 }
 
 func (li *LogicImpl) GetNote(ctx context.Context, id string) (Note, error) {
-	row := li.DB.QueryRowContext(ctx, "SELECT * FROM notes WHERE id = ?", id)
+	row := li.DB.QueryRowContext(ctx, "SELECT * FROM notes WHERE id = ?;", id)
 
 	if err := row.Err(); err != nil {
 		return Note{}, fmt.Errorf("query failed: %w", err)
@@ -82,7 +82,7 @@ func (li *LogicImpl) CreateNote(ctx context.Context, desc string, addDate bool) 
 }
 
 func (li *LogicImpl) UpdateNote(ctx context.Context, id string, newDescription string) (Note, error) {
-	_, err := li.DB.ExecContext(ctx, "UPDATE notes set description = ? WHERE id = ?", newDescription, id)
+	_, err := li.DB.ExecContext(ctx, "UPDATE notes set description = ? WHERE id = ?;", newDescription, id)
 	if err != nil {
 		return Note{}, fmt.Errorf("execute query failed: %w", err)
 	}
@@ -91,7 +91,7 @@ func (li *LogicImpl) UpdateNote(ctx context.Context, id string, newDescription s
 }
 
 func (li *LogicImpl) DeleteNote(ctx context.Context, id string) error {
-	_, err := li.DB.ExecContext(ctx, "DELETE FROM notes WHERE id = ?", id)
+	_, err := li.DB.ExecContext(ctx, "DELETE FROM notes WHERE id = ?;", id)
 	if err != nil {
 		return fmt.Errorf("query exec failed: %w", err)
 	}
@@ -111,9 +111,9 @@ func (li *LogicImpl) getCalendarInfo(ctx context.Context) (string, error) {
 	}
 
 	defer resp.Body.Close()
-	m := json.NewDecoder(resp.Body)
 	var date string
-	err = m.Decode(&date)
+
+	err = json.NewDecoder(resp.Body).Decode(&date)
 	if err != nil {
 		return "", fmt.Errorf("decode failed: %w", err)
 	}
