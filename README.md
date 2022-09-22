@@ -4,7 +4,10 @@ Tutorial for golang application used by APM Ecosystems team for agent setup in p
 # Installation
 
 Inside the cmd folder there are two directories for notes and calendar.
-Build and run the main.go file inside each directory to run the corresponding application
+
+A makefile is attached for convenience. Use `make` to build the programs and `make run` to run both the notes and calendar applications. Use `make exit` to kill the running applications in the background.
+
+Otherwise, build and run the main.go file inside each directory to run the corresponding application
 
 # Example requests:
 
