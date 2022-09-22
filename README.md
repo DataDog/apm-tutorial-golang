@@ -3,9 +3,8 @@ Tutorial for golang application used by APM Ecosystems team for agent setup in p
 
 # Installation
 
-Navigate to calendar/ and run `go run cmd/main.go` to run calendar application
-
-Navigate to notes/ and run `go run cmd/main.go` to run notes application
+Inside the cmd folder there are two directories for notes and calendar.
+Build and run the main.go file inside each directory to run the corresponding application
 
 # Example requests:
 
