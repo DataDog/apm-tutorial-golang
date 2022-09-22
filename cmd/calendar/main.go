@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/datadog/apm_tutorial_golang/calendar"
@@ -28,6 +29,10 @@ func main() {
 	r.Use(chitrace.Middleware(chitrace.WithServiceName("calendar")))
 
 	r.Get("/calendar", calendar.GetDate)
+	r.Post("/calendar/quit", func(rw http.ResponseWriter, r *http.Request) {
+		time.AfterFunc(1*time.Second, func() { os.Exit(0) })
+		rw.Write([]byte("Goodbye\n"))
+	})
 
 	log.Fatal(http.ListenAndServe(":9090", r))
 
