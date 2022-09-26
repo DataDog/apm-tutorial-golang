@@ -1,0 +1,43 @@
+#Use when service is running on docker and agent is running locally on Mac/Windows
+#Ensure that agent is configured for container data by setting apm_config and apm_non_local_traffic:true in datadog.yaml file
+
+version: '3'
+services:
+  notes:
+    container_name: notes
+    restart: always
+    build: 
+       context: ../
+       dockerfile: notes/dockerfile.notes
+    ports:
+      - 8080:8080
+    labels:
+      - com.datadoghq.tags.service="notes"
+      - com.datadoghq.tags.env="dev"
+      - com.datadoghq.tags.version="0.0.1"
+    environment:
+      - DD_SERVICE=notes
+      - DD_ENV=dev
+      - DD_VERSION=0.0.1
+      - DD_AGENT_HOST=host.docker.internal 
+      - CALENDAR_HOST=calendar
+    depends_on:
+      - calendar
+
+  calendar:
+    container_name: calendar
+    restart: always
+    build: 
+      context: ../
+      dockerfile: calendar/dockerfile.calendar
+    ports:
+      - 9090:9090
+    labels:
+      - com.datadoghq.tags.service="calendar"
+      - com.datadoghq.tags.env="dev"
+      - com.datadoghq.tags.version="0.0.1"
+    environment:
+      - DD_SERVICE=calendar
+      - DD_ENV=dev
+      - DD_VERSION=0.0.1
+      - DD_AGENT_HOST=host.docker.internal

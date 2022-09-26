@@ -1,0 +1,20 @@
+#Golang image
+FROM golang:1.18
+
+WORKDIR /home/apm-tutorial-golang
+
+#Install go libraries
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
+
+#Copy notes application
+COPY notes notes/
+COPY cmd/notes cmd/notes/ 
+
+#Clean and build
+RUN go clean
+RUN go build -o cmd/notes/notes ./cmd/notes
+
+#Run application
+ENTRYPOINT ["./cmd/notes/notes"]  

@@ -1,0 +1,20 @@
+#Golang image
+FROM golang:1.18
+
+WORKDIR /home/apm-tutorial-golang
+
+#Install go libraries
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
+
+#Copy notes application
+COPY calendar calendar/
+COPY cmd/calendar cmd/calendar/ 
+
+#Clean and build
+RUN go clean
+RUN go build -o cmd/calendar/calendar ./cmd/calendar
+
+#Run application
+ENTRYPOINT ["./cmd/calendar/calendar"]  
