@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: notes-app
+  labels:
+    name: notes-app-service
+    app: java-tutorial-app
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 8080
+      nodePort: 30080
+  selector:
+    name: notes-app-pod
+    app: java-tutorial-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notes-app-deploy
+  labels:
+    name: notes-app-deploy
+    app: java-tutorial-app
+    tags.datadoghq.com/env: "dev"
+    tags.datadoghq.com/service: "notes"
+    tags.datadoghq.com/version: "0.0.1"
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      name: notes-app-pod
+      app: java-tutorial-app
+  template:
+    metadata:
+      name: notes-app-pod
+      labels:
+        name: notes-app-pod
+        app: java-tutorial-app
+        tags.datadoghq.com/env: "dev"
+        tags.datadoghq.com/service: "notes"
+        tags.datadoghq.com/version: "0.0.1"
+    spec:
+      containers:
+        - name: notes-app
+          image: NOTES_IMAGE_HERE
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: CALENDAR_HOST
+              value: calendar-app
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+      restartPolicy: Always

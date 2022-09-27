@@ -23,8 +23,6 @@ func main() {
 	log.Printf("Starting from port 9090")
 
 	r := chi.NewRouter()
-
-	r.Use(middleware.Timeout(2500 * time.Millisecond))
 	r.Use(middleware.Logger)
 	r.Use(chitrace.Middleware(chitrace.WithServiceName("calendar")))
 

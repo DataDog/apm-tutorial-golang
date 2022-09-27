@@ -1,0 +1,16 @@
+#Use when running application on k8s or related places like AWS EKS or GCP GKE
+#Creates bare application images as other variables will be set in other k8s files
+version: '3'
+services:
+  notes:
+    container_name: notes
+    build: 
+       context: ../
+       dockerfile: notes/dockerfile.notes
+
+  calendar:
+    container_name: calendar
+    build: 
+      context: ../
+      dockerfile: calendar/dockerfile.calendar
+    

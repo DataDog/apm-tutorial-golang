@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"go.uber.org/zap"
 	sqltrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/database/sql"
@@ -52,7 +51,6 @@ func main() {
 	}
 
 	r := chi.NewRouter()
-	r.Use(middleware.Timeout(2500 * time.Millisecond))
 	r.Use(middleware.Logger)
 	r.Use(chitrace.Middleware(chitrace.WithServiceName("notes")))
 	r.Mount("/", nr.Register())
