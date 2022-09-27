@@ -16,5 +16,8 @@ COPY cmd/notes cmd/notes/
 RUN go clean
 RUN go build -o cmd/notes/notes ./cmd/notes
 
+#Set sample rate
+ENV DD_TRACE_SAMPLE_RATE 1
+
 #Run application
 ENTRYPOINT ["./cmd/notes/notes"]  

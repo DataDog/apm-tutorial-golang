@@ -16,5 +16,8 @@ COPY cmd/calendar cmd/calendar/
 RUN go clean
 RUN go build -o cmd/calendar/calendar ./cmd/calendar
 
+#Set sample rate
+ENV DD_TRACE_SAMPLE_RATE 1
+
 #Run application
 ENTRYPOINT ["./cmd/calendar/calendar"]  
