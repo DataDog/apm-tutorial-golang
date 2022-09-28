@@ -9,7 +9,6 @@ import (
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 )
 
-//tracing annotations go here if possible
 func doLongRunningProcess(ctx context.Context) {
 	childSpan, ctx := tracer.StartSpanFromContext(ctx, "traceMethod1")
 	childSpan.SetTag(ext.ResourceName, "NotesHelper.doLongRunningProcess")

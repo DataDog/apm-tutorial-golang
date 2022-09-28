@@ -29,6 +29,7 @@ func main() {
 	db := setupDB(logger)
 	defer db.Close()
 
+	// Creates span with resource name equal to http Method and path
 	client := httptrace.WrapClient(http.DefaultClient, httptrace.RTWithResourceNamer(func(req *http.Request) string {
 		return fmt.Sprintf("%s %s", req.Method, req.URL.Path)
 	}))
