@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: calendar-app
+  labels:
+    name: calendar-app-service
+    app: go-tutorial-app
+spec:
+  type: NodePort
+  ports:
+    - port: 9090
+      targetPort: 9090
+      nodePort: 30090
+  selector:
+    name: calendar-app-pod
+    app: go-tutorial-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: calendar-app-deploy
+  labels:
+    name: calendar-app-deploy
+    app: go-tutorial-app
+    tags.datadoghq.com/env: "dev"
+    tags.datadoghq.com/service: "calendar"
+    tags.datadoghq.com/version: "0.0.1"
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      name: calendar-app-pod
+      app: go-tutorial-app
+  template:
+    metadata:
+      name: calendar-app-pod
+      labels:
+        name: calendar-app-pod
+        app: go-tutorial-app
+        tags.datadoghq.com/env: "dev"
+        tags.datadoghq.com/service: "calendar"
+        tags.datadoghq.com/version: "0.0.1"
+    spec:
+      containers:
+        - name: calendar-app
+          image: CALENDAR_IMAGE_HERE
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9090
+          env:
+            - name: DD_ENV
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/env']
+            - name: DD_SERVICE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/service']
+            - name: DD_VERSION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['tags.datadoghq.com/version']
+      restartPolicy: Always

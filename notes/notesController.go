@@ -34,6 +34,7 @@ func (nr *Router) Register() chi.Router {
 	r.Get("/notes/{noteID}", makeSpanMiddleware("GetNote", nr.GetNoteByID))          // GET /notes/123
 	r.Put("/notes/{noteID}", makeSpanMiddleware("UpdateNote", nr.UpdateNoteByID))    // PUT /notes/123
 	r.Delete("/notes/{noteID}", makeSpanMiddleware("DeleteNote", nr.DeleteNoteByID)) // DELETE /notes/123
+
 	r.Post("/notes/quit", func(rw http.ResponseWriter, r *http.Request) {
 		time.AfterFunc(1*time.Second, func() { os.Exit(0) })
 		rw.Write([]byte("Goodbye\n"))

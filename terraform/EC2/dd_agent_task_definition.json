@@ -1,0 +1,70 @@
+{
+    "family": "datadog-agent-task",
+    "containerDefinitions": [
+      {
+        "name": "datadog-agent",
+        "image": "public.ecr.aws/datadog/agent:latest",
+        "cpu": 100,
+        "memory": 512,
+        "essential": true,
+        "portMappings": [
+            {
+              "hostPort": 8126,
+              "containerPort": 8126,
+              "protocol": "tcp"
+            }
+        ],
+        "mountPoints": [
+          {
+            "containerPath": "/var/run/docker.sock",
+            "sourceVolume": "docker_sock",
+            "readOnly": false
+          },
+          {
+            "containerPath": "/host/sys/fs/cgroup",
+            "sourceVolume": "cgroup",
+            "readOnly": false
+          },
+          {
+            "containerPath": "/host/proc",
+            "sourceVolume": "proc",
+            "readOnly": false
+          }
+        ],
+        "environment": [
+          {
+            "name": "DD_API_KEY",
+            "value": "<API_KEY_HERE>"
+          },
+          {
+            "name": "DD_SITE",
+            "value": "datadoghq.com"
+          },
+          {
+            "name": "DD_APM_ENABLED",
+            "value": "true"
+          }
+        ]
+      }
+    ],
+    "volumes": [
+      {
+        "host": {
+          "sourcePath": "/var/run/docker.sock"
+        },
+        "name": "docker_sock"
+      },
+      {
+        "host": {
+          "sourcePath": "/proc/"
+        },
+        "name": "proc"
+      },
+      {
+        "host": {
+          "sourcePath": "/sys/fs/cgroup/"
+        },
+        "name": "cgroup"
+      }
+    ]
+}
