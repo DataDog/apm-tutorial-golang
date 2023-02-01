@@ -23,14 +23,17 @@ buildNotes: notes
 buildCalendar: calendar
 
 runNotes: buildNotes
-	DD_TRACE_SAMPLE_RATE=1 DD_SERVICE=notes DD_ENV=dev DD_VERSION=0.0.1 ./cmd/notes/notes
+	DD_TRACE_SAMPLE_RATE=1 DD_SERVICE=notes DD_ENV=dev DD_VERSION=0.0.1 ./cmd/notes/notes &
 
 runCalendar: buildCalendar
-	DD_TRACE_SAMPLE_RATE=1 DD_SERVICE=calendar DD_ENV=dev DD_VERSION=0.0.1 ./cmd/calendar/calendar
+	DD_TRACE_SAMPLE_RATE=1 DD_SERVICE=calendar DD_ENV=dev DD_VERSION=0.0.1 ./cmd/calendar/calendar &
 
 exit:
 	curl -X POST localhost:8080/notes/quit
 	curl -X POST localhost:9090/calendar/quit
+
+exitNotes:
+	curl -X POST localhost:8080/notes/quit
 
 clean:
 	go clean

@@ -6,11 +6,11 @@ services:
     container_name: notes
     build: 
        context: ../
-       dockerfile: notes/dockerfile.notes
+       dockerfile: ../dockerfile.notes
 
   calendar:
     container_name: calendar
     build: 
       context: ../
-      dockerfile: calendar/dockerfile.calendar
+      dockerfile: ../dockerfile.calendar
     

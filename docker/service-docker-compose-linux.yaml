@@ -10,7 +10,7 @@ services:
     restart: always
     build: 
        context: ../
-       dockerfile: notes/dockerfile.notes
+       dockerfile: ../dockerfile.notes
     ports:
       - 8080:8080
     extra_hosts:
@@ -33,7 +33,7 @@ services:
     restart: always
     build: 
       context: ../
-      dockerfile: calendar/dockerfile.calendar
+      dockerfile: ../dockerfile.calendar
     ports:
       - 9090:9090
     labels:

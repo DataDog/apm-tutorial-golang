@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	//"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
 
 	"github.com/go-chi/chi"
 )
@@ -29,11 +29,17 @@ type Router struct {
 
 func (nr *Router) Register() chi.Router {
 	r := chi.NewRouter()
-	r.Get("/notes", makeSpanMiddleware("GetAllNotes", nr.GetAllNotes))               // GET /notes
-	r.Post("/notes", makeSpanMiddleware("CreateNote", nr.CreateNote))                // POST /notes
-	r.Get("/notes/{noteID}", makeSpanMiddleware("GetNote", nr.GetNoteByID))          // GET /notes/123
-	r.Put("/notes/{noteID}", makeSpanMiddleware("UpdateNote", nr.UpdateNoteByID))    // PUT /notes/123
-	r.Delete("/notes/{noteID}", makeSpanMiddleware("DeleteNote", nr.DeleteNoteByID)) // DELETE /notes/123
+	r.Get("/notes", nr.GetAllNotes)                // GET /notes
+	r.Post("/notes", nr.CreateNote)                // POST /notes
+	r.Get("/notes/{noteID}", nr.GetNoteByID)       // GET /notes/123
+	r.Put("/notes/{noteID}", nr.UpdateNoteByID)    // PUT /notes/123
+	r.Delete("/notes/{noteID}", nr.DeleteNoteByID) // DELETE /notes/123
+
+	//r.Get("/notes", makeSpanMiddleware("GetAllNotes", nr.GetAllNotes))               // GET /notes
+	//r.Post("/notes", makeSpanMiddleware("CreateNote", nr.CreateNote))                // POST /notes
+	//r.Get("/notes/{noteID}", makeSpanMiddleware("GetNote", nr.GetNoteByID))          // GET /notes/123
+	//r.Put("/notes/{noteID}", makeSpanMiddleware("UpdateNote", nr.UpdateNoteByID))    // PUT /notes/123
+	//r.Delete("/notes/{noteID}", makeSpanMiddleware("DeleteNote", nr.DeleteNoteByID)) // DELETE /notes/123
 
 	r.Post("/notes/quit", func(rw http.ResponseWriter, r *http.Request) {
 		time.AfterFunc(1*time.Second, func() { os.Exit(0) })
@@ -43,14 +49,14 @@ func (nr *Router) Register() chi.Router {
 	return r
 }
 
-func makeSpanMiddleware(name string, h http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		span, ctx := tracer.StartSpanFromContext(r.Context(), name)
-		r = r.WithContext(ctx)
-		defer span.Finish()
-		h.ServeHTTP(w, r)
-	}
-}
+//func makeSpanMiddleware(name string, h http.HandlerFunc) http.HandlerFunc {
+//	return func(w http.ResponseWriter, r *http.Request) {
+//		span, ctx := tracer.StartSpanFromContext(r.Context(), name)
+//		r = r.WithContext(ctx)
+//		defer span.Finish()
+//		h.ServeHTTP(w, r)
+//	}
+//}
 
 func reportError(err error, category string, w http.ResponseWriter) {
 	msg := struct {
