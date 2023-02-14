@@ -18,42 +18,42 @@ services:
       - DD_SERVICE=notes
       - DD_ENV=dev
       - DD_VERSION=0.0.1
-      - DD_AGENT_HOST=datadog-agent
-      - CALENDAR_HOST=calendar
-    depends_on:
-      - calendar
-      - datadog-agent
+#      - DD_AGENT_HOST=datadog-agent
+#      - CALENDAR_HOST=calendar
+#    depends_on:
+#      - calendar
+#      - datadog-agent
 
-  calendar:
-    container_name: calendar
-    restart: always
-    build: 
-      context: ../
-      dockerfile: calendar/dockerfile.calendar
-    labels:
-       - com.datadoghq.tags.service="calendar"
-       - com.datadoghq.tags.env="dev"
-       - com.datadoghq.tags.version="0.0.1"
-    environment:
-       - DD_SERVICE=calendar
-       - DD_ENV=dev
-       - DD_VERSION=0.0.1
-       - DD_AGENT_HOST=datadog-agent
-    ports:
-      - 9090:9090
-    depends_on:
-      - datadog-agent
+#  calendar:
+#    container_name: calendar
+#    restart: always
+#    build: 
+#      context: ../
+#      dockerfile: calendar/dockerfile.calendar
+#    labels:
+#       - com.datadoghq.tags.service="calendar"
+#       - com.datadoghq.tags.env="dev"
+#       - com.datadoghq.tags.version="0.0.1"
+#    environment:
+#       - DD_SERVICE=calendar
+#       - DD_ENV=dev
+#       - DD_VERSION=0.0.1
+#       - DD_AGENT_HOST=datadog-agent
+#    ports:
+#      - 9090:9090
+#    depends_on:
+#      - datadog-agent
       
-  datadog-agent:
-    container_name: datadog-agent
-    image: "gcr.io/datadoghq/agent:latest"
-    pid: host
-    environment:
-      - DD_API_KEY=<DD_API_KEY_HERE>
-      - DD_APM_ENABLED=true
-      - DD_APM_NON_LOCAL_TRAFFIC=true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /proc/:/host/proc/:ro
-      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro 
+#  datadog-agent:
+#    container_name: datadog-agent
+#    image: "gcr.io/datadoghq/agent:latest"
+#    pid: host
+#    environment:
+#      - DD_API_KEY=<DD_API_KEY_HERE>
+#      - DD_APM_ENABLED=true
+#      - DD_APM_NON_LOCAL_TRAFFIC=true
+#    volumes:
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - /proc/:/host/proc/:ro
+#      - /sys/fs/cgroup:/host/sys/fs/cgroup:ro 
       
