@@ -11,6 +11,7 @@ import (
 	//chitrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/go-chi/chi"
 	//httptrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/net/http"
 	//"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+        //"fmt"
 
 	"github.com/datadog/apm_tutorial_golang/notes"
 	"github.com/go-chi/chi"
