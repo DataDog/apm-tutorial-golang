@@ -1,5 +1,5 @@
 # apm-tutorial-golang
-Tutorial for golang application used by APM Ecosystems team for agent setup in popular configurations
+Tutorial for Golang applications using the Datadog Agent in popular configurations
 
 # Installation
 
