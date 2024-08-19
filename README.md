@@ -38,3 +38,9 @@ Deleted
 `curl -X POST 'localhost:8080/notes?desc=hello_again&add_date=y'`
 
 {"id":2,"description":"hello_again with date 2022-11-06"}
+
+# Following Tracing Tutorial in Containers
+
+To run test applications in containers, you should run following:
+
+`docker compose -f docker/all-docker-compose.yaml up -d`

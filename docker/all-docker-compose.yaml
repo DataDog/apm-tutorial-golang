@@ -7,7 +7,7 @@ services:
     restart: always
     build: 
       context: ../
-      dockerfile: ../dockerfile.notes
+      dockerfile: dockerfile.notes
     ports:
       - 8080:8080
     labels:
@@ -29,7 +29,7 @@ services:
     restart: always
     build: 
       context: ../
-      dockerfile: ../dockerfile.calendar
+      dockerfile: dockerfile.calendar
     labels:
        - com.datadoghq.tags.service="calendar"
        - com.datadoghq.tags.env="dev"
