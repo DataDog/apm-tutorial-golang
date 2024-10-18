@@ -27,7 +27,7 @@ Otherwise, build and run the main.go file inside each directory to run the corre
 
 [{"id":1,"description":"hello"}]
 
-`curl -X PUT ‘localhost:8080/notes/1/desc=UpdatedNote’`
+`curl -X PUT 'localhost:8080/notes/1?desc=UpdatedNote'`
 
 {"id":1,"description":"UpdatedNote"}
 
